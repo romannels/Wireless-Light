@@ -3,9 +3,7 @@
 
 
 
-/*+++++++++++++++++++++++++++++++++++++++++++++
- *++++++++++++++++++CONSTANTS++++++++++++++++++
- *+++++++++++++++++++++++++++++++++++++++++++*/
+/* CONSTANTS */
 
 #define CM_PER_REG_START 0x44e10000 // Starting register address
 #define CM_PER_REG_LENGTH 1024 // memory length
