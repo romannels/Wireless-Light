@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include "PWM_Enabler.h"
 
-
+//TODO Should stick with either memory map or using linux
 void enable_PWM(void) 
 {
 /*enable_PWM
@@ -47,7 +47,7 @@ void enable_PWM(void)
 	}
 
 	snprintf(str, sizeof(str), "%d", 0);	
-	write(fd, str, 3); //
+	write(fd, str, 3);
         close(fd);	
 
 }	
