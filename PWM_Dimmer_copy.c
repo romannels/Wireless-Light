@@ -4,7 +4,7 @@
  * 	      	    Voss Lighting 2014			       *
  * 	      	                                               *
  * Accepts user input from a serial console to manipulate      *
- * PWM device 0A on the AM3359.                                *
+ * PWM perepherial 0A on the AM3359.                           *
  * ************************************************************/
 
 
@@ -24,7 +24,7 @@
 #include <poll.h>
 #include "PWM_Enabler.h"
 
-
+/* PROTOTYPES */
 void change_duty_cycle(int level);
 void PWM_run(char *light_switch);
 void change_period(long period);
@@ -35,10 +35,10 @@ int serial_port_read(char *read_buffer, size_t max_chars_to_read);
 void serial_port_write(char *write_buffer);
 void sigint_handler(int sig);
 
-static const char *PORT_NAME = "/dev/ttyUSB0";
+static const char *PORT_NAME = "/dev/ttyUSB0"; // USB0 location
 
 int serial_port;
-struct termios options_original;
+struct termios options_original; // struct for serial communication
 
 
 
@@ -46,14 +46,14 @@ struct termios options_original;
 int main()
 {
 	int chars_read;
-	char read_buffer[MAX_COMMAND_LENGTH +1] = {0};
+	char read_buffer[MAX_COMMAND_LENGTH +1] = {0}; // termiinal input buffer
 	
 	enable_PWM(); // Turn on EHRPWM0A
 	serial_port_open();
 	printf("after serial_port_open()\n");
 	if(serial_port != -1)
 	{
-		signal(SIGINT, (void*)sigint_handler);
+		signal(SIGINT, (void*)sigint_handler); // listen for special commands
 
 		serial_port_write("USB virtual serial port test program\r\n");
 		serial_port_write("Please type changeperiod, changedutycycle, on, or off\r\n");
@@ -66,12 +66,12 @@ int main()
 		if(serial_port != -1)
 		{
 		//	printf("in loop, something in serial buffer\n");
-			chars_read = serial_port_read(read_buffer, MAX_COMMAND_LENGTH);
+			chars_read = serial_port_read(read_buffer, MAX_COMMAND_LENGTH); // stuff read buffer into chars_read
 		//	printf("in loop, after reading serial buffer\n");
 			if(chars_read > 0)
 			{
 			//	printf("waiting for command\n");
-				respond_to_command(read_buffer, chars_read);
+				respond_to_command(read_buffer, chars_read); // do something with the command
 			}	
 		}	
 
@@ -80,7 +80,7 @@ int main()
 	return 0;
 }
 
-void change_duty_cycle(int level) // TODO TODO TODO TODO NEEDS TO READ ACTUAL PERIOD NOT MAKE UP!!!!
+void change_duty_cycle(int level) // TODO TODO TODO TODO NEEDS TO READ ACTUAL PERIOD NOT USE HARD CODED GARBAGE!!!!
 {
 	int fd;
 	char buf[MAX_BUF];
@@ -112,25 +112,25 @@ void PWM_run(char *light_switch)
 {
 	if(strstr(light_switch, "NULL") != NULL)
 	{
-		perror("ERROR: NULL POINTER in PWM_run");
+		perror("ERROR: NULL in PWM_run"); // This should not happen
 	}
 
 	int fd, len;
 	char buf[MAX_BUF];
 
-	len = snprintf(buf, sizeof(buf), PWM_DIR "/run");
+	len = snprintf(buf, sizeof(buf), PWM_DIR "/run"); // change directory into a string
 	if(len <0)
 	{
 		perror("ERROR: BUFFER WRITE in PWM_run");
 	}
 
-	fd = open(buf, O_WRONLY);
+	fd = open(buf, O_WRONLY); // open up perepherial file
 	if(fd < 0)
 	{
 		perror("PWM_run");
 	}
 
-	if(strstr(light_switch, "on") != NULL)
+	if(strstr(light_switch, "on") != NULL) // turn PWM on or off
 	{
 		write(fd, "1", 2);
 	}
@@ -154,13 +154,13 @@ void change_period(long period) // period in milliseconds
 	}
 
 	period = period * PERIOD_BASIS; // converts to milliseconds
-	len = snprintf(buf, sizeof(buf), PWM_DIR "/period");
+	len = snprintf(buf, sizeof(buf), PWM_DIR "/period"); // change directory to string
 	if(len < 0)
 	{
 		perror("ERROR: BUFFER WRITE in change_period");
 	}
 
-	fd = open(buf, O_WRONLY);
+	fd = open(buf, O_WRONLY); // open up perepherial file
 	if(fd < 0)
 	{
 		perror("ERROR: OPEN FILE in change_period");
@@ -182,14 +182,14 @@ void respond_to_command(char *read_buffer, int chars_read)
 	{
 		printf("change period");	
 		serial_port_write("Enter new period\r\n");
-		for(;;)
+		for(;;) // TODO this should probably be wrapped in a function
 		{
-			chars_read = serial_port_read(read_buffer, MAX_COMMAND_LENGTH);
+			chars_read = serial_port_read(read_buffer, MAX_COMMAND_LENGTH); // check serial buffer
 			if(chars_read > 0)
 			{
-				period = atol(read_buffer);
+				period = atol(read_buffer); // cast to long... this baby is gonna be huge
 				change_period(period);
-				respond_to_command(read_buffer, chars_read);
+				respond_to_command(read_buffer, chars_read); //This is actually unneccessary TODO remove when stable
 				break;
 			}
 			else
@@ -202,14 +202,14 @@ void respond_to_command(char *read_buffer, int chars_read)
 	else if(strstr(read_buffer, "dutycycle") != NULL)
 	{
 		serial_port_write("Enter new period\r\n");
-		for(;;)
+		for(;;) // TODO this should probably be wrapped in a function
 		{
-			chars_read = serial_port_read(read_buffer, MAX_COMMAND_LENGTH);
+			chars_read = serial_port_read(read_buffer, MAX_COMMAND_LENGTH); // check serial buffer
 			if(chars_read > 0)
 			{
-				duty_cycle = atoi(read_buffer);
+				duty_cycle = atoi(read_buffer); 
 				change_duty_cycle(duty_cycle);
-				respond_to_command(read_buffer,chars_read);
+				respond_to_command(read_buffer,chars_read); // Again unnecssary TODO remove when stable
 				break;
 			}
 			else
@@ -220,35 +220,35 @@ void respond_to_command(char *read_buffer, int chars_read)
 	}
 	else if(strstr(read_buffer, "off") != NULL)
 	{
-		serial_port_write("off");
+		serial_port_write("off"); // just letting you know
 		PWM_run(read_buffer);
 	}
 	else if(strstr(read_buffer, "on") != NULL)
 	{
-		serial_port_write("on");
+		serial_port_write("on"); // just letting you know
 		PWM_run(read_buffer);
 	}
 	else if(strstr(read_buffer, "closeapp") != NULL)
 	{
 		serial_port_close();
-		exit(EXIT_SUCCESS);
+		exit(EXIT_SUCCESS); // signal exit
 	}
 
 }
 
 void serial_port_close(void)
 {
-	tcsetattr(serial_port, TCSANOW, &options_original);
+	tcsetattr(serial_port, TCSANOW, &options_original); // assign serial attributes to serial_port
 	close(serial_port);
 }
 
 int serial_port_open(void)
 {
-	struct termios options;
+	struct termios options; // create another termios struct
 
-	serial_port = open(PORT_NAME, O_RDWR | O_NONBLOCK);
+	serial_port = open(PORT_NAME, O_RDWR | O_NONBLOCK); // assign USB0 file handle to serial_port
 
-	if(serial_port != -1)
+	if(serial_port != -1) // configure serial
 	{
 		printf("Serial port open\n");
 		tcgetattr(serial_port, &options_original);	
@@ -266,10 +266,9 @@ int serial_port_open(void)
 	return(serial_port);
 }
 
-int serial_port_read(char *read_buffer, size_t max_chars_to_read)
+int serial_port_read(char *read_buffer, size_t max_chars_to_read) // makes it fancy
 {
-	int chars_read = read(serial_port, read_buffer, max_chars_to_read);
-	//printf("in serial_port_read\n");
+	int chars_read = read(serial_port, read_buffer, max_chars_to_read); // assign file handle for USB0 to chars_read
 	return chars_read;
 }
 
@@ -278,7 +277,7 @@ void serial_port_write(char *write_buffer)
 	int bytes_written;
 	size_t len = 0;
 
-	len = strlen(write_buffer);
+	len = strlen(write_buffer); // length in bytes of write_buffer, might put this inside of write
 	bytes_written = write(serial_port, write_buffer, len);
 	if(bytes_written < len)
 	{
@@ -288,8 +287,8 @@ void serial_port_write(char *write_buffer)
 
 void sigint_handler(int sig)
 {
-	serial_port_close();
-	exit(sig);
+	serial_port_close(); 
+	exit(sig); // kill everything
 }
 
 
